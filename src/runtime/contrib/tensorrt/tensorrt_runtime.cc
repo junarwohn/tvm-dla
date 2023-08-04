@@ -77,6 +77,8 @@ class TensorRTRuntime : public JSONRuntimeBase {
     const bool use_int8 = dmlc::GetEnv("TVM_TENSORRT_USE_INT8", false);
     multi_engine_mode_ = dmlc::GetEnv("TVM_TENSORRT_MULTI_ENGINE", false);
     num_calibration_batches_remaining_ = dmlc::GetEnv("TENSORRT_NUM_CALI_INT8", 0);
+    dla_core_ = dmlc::GetEnv("TVM_TENSORRT_DLA_CORE", -1);
+    gpu_fallback_ = dmlc::GetEnv("TVM_TENSORRT_GPU_FALLBACK", true);
     if (use_int8) {
       ICHECK(num_calibration_batches_remaining_ != 0)
           << "When using INT8 mode, "
@@ -135,6 +137,9 @@ class TensorRTRuntime : public JSONRuntimeBase {
       }
       if (nodes_[i].HasAttr("use_fp16")) {
         use_fp16_ = std::stoi(nodes_[i].GetAttr<std::vector<std::string>>("use_fp16")[0]);
+      }
+      if (nodes_[i].HasAttr("gpu_fallback")) {
+        gpu_fallback_ = std::stoi(nodes_[i].GetAttr<std::vector<std::string>>("gpu_fallback")[0]);
       }
     }
   }
@@ -324,7 +329,8 @@ class TensorRTRuntime : public JSONRuntimeBase {
   void BuildEngineFromJson(int batch_size) {
     const bool use_fp16 = dmlc::GetEnv("TVM_TENSORRT_USE_FP16", false) || use_fp16_;
     TensorRTBuilder builder(&logger_, data_entry_, max_workspace_size_, use_implicit_batch_,
-                            use_fp16, batch_size, calibrator_.get());
+                            use_fp16, batch_size, calibrator_.get(),
+                            dla_core_, gpu_fallback_);
     for (size_t i = 0; i < input_nodes_.size(); ++i) {
       auto nid = input_nodes_[i];
       const auto& node = nodes_[nid];
@@ -516,6 +522,14 @@ class TensorRTRuntime : public JSONRuntimeBase {
 
   /*! \brief Use auto-conversion to fp16 */
   bool use_fp16_;
+
+  /*! \brief Index of DLA core to use. */
+  /*! \brief -1: GPU, 0: DLA0, 1: DLA1 */
+  int dla_core_;
+
+  /*! \brief Whether to use GPU instead of DLA */
+  /*! \brief for some unsupported operations*/
+  bool gpu_fallback_;
 };
 
 runtime::Module TensorRTRuntimeCreate(const String& symbol_name, const String& graph_json,

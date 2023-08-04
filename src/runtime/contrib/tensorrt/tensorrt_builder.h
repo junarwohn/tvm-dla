@@ -73,7 +73,8 @@ class TensorRTBuilder {
    */
   TensorRTBuilder(TensorRTLogger* logger, const std::vector<const DLTensor*>& data_entry,
                   size_t max_workspace_size, bool use_implicit_batch, bool use_fp16, int batch_size,
-                  nvinfer1::IInt8Calibrator* calibrator = nullptr);
+                  nvinfer1::IInt8Calibrator* calibrator = nullptr,
+                  int dla_core = -1, bool gpu_fallback = true);
 
   /*!
    * \brief Add TensorRT input(s) for input node in network definition.
@@ -168,6 +169,14 @@ class TensorRTBuilder {
   /*! \brief calibrator pointer to add batch data when using int8 mode */
   /*! \brief pointer will be nullptr when it is fp16 or fp32 precision */
   nvinfer1::IInt8Calibrator* calibrator_;
+
+  /*! \brief Index of DLA core to use. */
+  /*! \brief -1: GPU, 0: DLA0, 1: DLA1 */
+  int dla_core_;
+
+  /*! \brief Whether to use GPU instead of DLA */
+  /*! \brief for some unsupported operations*/
+  bool gpu_fallback_;
 };
 
 }  // namespace contrib

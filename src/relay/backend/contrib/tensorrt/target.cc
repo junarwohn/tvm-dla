@@ -61,7 +61,10 @@ TVM_REGISTER_TARGET_KIND("tensorrt", kDLCUDA)
     .add_attr_option<Bool>("use_fp16", Bool(false))
     // If true, allows TensorRT to automatically convert float32 operations to uint8
     // (aka quantized). Default false.
-    .add_attr_option<Bool>("use_uint8", Bool(false));
+    .add_attr_option<Bool>("use_uint8", Bool(false))
+
+    .add_attr_option<Bool>("dla_core", Integer(-1))
+    .add_attr_option<Bool>("gpu_fallback", Bool(true));
 
 }  // namespace tensorrt
 }  // namespace contrib

@@ -314,6 +314,16 @@ class TensorRTJSONSerializer : public JSONSerializer {
       Bool target_attr = target_->GetAttr<Bool>("use_uint8").value();
       SetAttr(node, "use_uint8", {std::to_string(target_attr->value)});
     }
+
+    {
+      Bool target_attr = target_->GetAttr<Bool>("dla_core").value();
+      SetAttr(node, "dla_core", {std::to_string(target_attr->value)});
+    }
+
+    {
+      Bool target_attr = target_->GetAttr<Bool>("gpu_fallback").value();
+      SetAttr(node, "gpu_fallback", {std::to_string(target_attr->value)});
+    }
   }
 
   /*! \brief The "tensorrt" Target guiding compilation. */

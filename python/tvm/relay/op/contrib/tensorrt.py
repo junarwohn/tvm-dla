@@ -118,6 +118,11 @@ def get_tensorrt_use_fp16() -> bool:
     target = get_tensorrt_target()
     return target.attrs["use_fp16"]
 
+#def get_tensorrt_dla_core() -> int:
+#    """Returns the "dla_core" attribute of the current "tensorrt" target."""
+#    target = get_tensorrt_target()
+#    return target.attrs["dla_core"]
+
 
 def partition_for_tensorrt(
     mod: tvm.IRModule,
@@ -134,6 +139,9 @@ def partition_for_tensorrt(
         The module to partition.
     target : tvm.target.Target
         A target of kind "tensorrt" describing additional partitioning and compilation options.
+        Information of dla_core and gpu_fallback should be passed by target 
+        (ex, target.attrs["dla_core"] : -1)
+        (ex, target.attrs["gpu_fallback"] : True)
     params : Optional[Dict[str, tvm.nd.NDArray]]
         Constant input parameters.
 

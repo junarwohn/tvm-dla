@@ -23,6 +23,7 @@
  */
 
 #include "tensorrt_builder.h"
+#include "NvInferRuntime.h"
 
 #include <tvm/runtime/ndarray.h>
 
@@ -40,14 +41,17 @@ namespace contrib {
 TensorRTBuilder::TensorRTBuilder(TensorRTLogger* logger,
                                  const std::vector<const DLTensor*>& data_entry,
                                  size_t max_workspace_size, bool use_implicit_batch, bool use_fp16,
-                                 int batch_size, nvinfer1::IInt8Calibrator* calibrator)
+                                 int batch_size, nvinfer1::IInt8Calibrator* calibrator,
+                                 int dla_core, bool gpu_fallback)
     : data_entry_(data_entry),
       max_workspace_size_(max_workspace_size),
       use_implicit_batch_(use_implicit_batch),
       use_fp16_(use_fp16),
       use_int8_(false),
       batch_size_(batch_size),
-      calibrator_(calibrator) {
+      calibrator_(calibrator),
+      dla_core_(dla_core),
+      gpu_fallback_(gpu_fallback) {
   // Create TRT builder and network.
   builder_ = nvinfer1::createInferBuilder(*logger);
 
@@ -171,6 +175,17 @@ TensorRTEngineAndContext TensorRTBuilder::BuildEngine() {
 #if TRT_VERSION_GE(6, 0, 1)
   config_ = builder_->createBuilderConfig();
   config_->setMaxWorkspaceSize(max_workspace_size_);
+  
+  // Make the engine to use a specified DLA core.
+  if (dla_core_ >= 0) {
+    config_->setDefaultDeviceType(nvinfer1::DeviceType::kDLA);
+    config_->setDLACore(dla_core_);
+    if (gpu_fallback_)
+      config_->setFlag(nvinfer1::BuilderFlag::kGPU_FALLBACK);
+    if (!use_int8_) use_fp16_ = true;
+    config_->setFlag(nvinfer1::BuilderFlag::kSTRICT_TYPES);
+  }
+
   if (use_fp16_) {
     config_->setFlag(nvinfer1::BuilderFlag::kFP16);
   }

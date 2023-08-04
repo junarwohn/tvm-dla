@@ -664,6 +664,8 @@ def create_executor(kind="debug", mod=None, device=None, target="llvm", params=N
     if mod is None:
         mod = IRModule()
     if device is not None:
+        print(device.device_type)
+        print(raw_targets[0].get_target_device_type())
         assert device.device_type == raw_targets[0].get_target_device_type()
     else:
         # Derive the default device from the first target.
